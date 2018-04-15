@@ -1,8 +1,9 @@
 <div class="sign-in-panel home">
 <br>
 
+<% if false %>
 <%= form_for(resource, :as => resource_name, :url => session_path(resource_name)) do |f| %>
-  
+
   <img src="/images/autolab.svg" alt="" class="valign login-logo">
   <h5>Login to Autolab</h5>
 
@@ -14,6 +15,7 @@
   <% end -%>
 
   <div><%= f.submit "Sign in", :class=>"btn primary" %></div>
+<% end %>
 <% end %>
 <br>
 <% if Rails.env == "development" %>
