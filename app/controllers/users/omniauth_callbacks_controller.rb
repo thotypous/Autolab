@@ -68,35 +68,20 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       else
         # Skip sign up for CMU Shibboleth user
         data = request.env["omniauth.auth"]
-        @user = User.where(email: data["uid"]).first # email is uid in our case
 
-        # If user doesn't exist, create one first
-        if @user.nil?
-          @user = User.new
-          @user.email = data["uid"]
+        @user = User.new
+        @user.email = data["info"]["email"]  # will fail if email is already taken
+        @user.first_name = data["info"]["name"]
+        @user.last_name = data["info"]["last_name"]
 
-          # Set user info based on LDAP lookup
-          if @user.email.include? "@andrew.cmu.edu"
-            ldapResult = User.ldap_lookup(@user.email.split("@")[0])
-            if ldapResult
-              @user.first_name = ldapResult[:first_name]
-              @user.last_name = ldapResult[:last_name]
-              @user.school = ldapResult[:school]
-              @user.major = ldapResult[:major]
-              @user.year = ldapResult[:year]
-            end
-          end
+        # If info not provided by Shibboleth, use (blank) as place holder
+        @user.first_name = "(blank)" if @user.first_name.nil?
+        @user.last_name = "(blank)" if @user.last_name.nil?
 
-          # If LDAP lookup failed, use (blank) as place holder
-          @user.first_name = "(blank)" if @user.first_name.nil?
-          @user.last_name = "(blank)" if @user.last_name.nil?
-
-          temp_pass = Devise.friendly_token[0, 20]    # generate a random token
-          @user.password = temp_pass
-          @user.password_confirmation = temp_pass
-          @user.skip_confirmation!
-
-        end
+        temp_pass = Devise.friendly_token[0, 20]    # generate a random token
+        @user.password = temp_pass
+        @user.password_confirmation = temp_pass
+        @user.skip_confirmation!
 
         @user.authentications.new(provider: "CMU-Shibboleth",
                                   uid: data["uid"])
